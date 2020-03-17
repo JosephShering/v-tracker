@@ -1,30 +1,42 @@
-import React from 'react';
+import React, {useRef} from 'react';
 import {graphql} from 'gatsby';
 import useMapData from '../hooks/useMapData';
 
+import Head from '../components/head';
+import Table from '../components/table';
+import Layout from '../components/layout';
+
 import './us-report.css';
+
 
 export default USReport;
 function USReport({
     data
 }) {
-    const mouseOver = (d) => {
-        console.log(d.attr('name'));
-    }
-
+    const parent = useRef(null);
+    const map = useRef(null);
+    const reports = data.allReport.edges.map(({node}) => node);
+    
     useMapData({
-        reports: data.allReport.edges.map(({node}) => node),
-        mouseOver, 
-        mouseOut: () => {}
+        reports,
+        parent,
+        map
     });
 
     return (
-        <div>
-            <div className="map"></div>
-            <ul>
-                {data.allReport.edges.map(({node}) => <li key={node.Name}>{node.Name} - {node.Reported.Max}</li>)}
-            </ul>
-        </div>
+        <Layout>
+            <div ref={parent} className="flex flex-col items-center box-border">
+                <Head />
+                <div className="map w-full my-6" ref={map}></div>
+
+                <Table data={reports.map(report => {
+                    return {
+                        state: report.Name,
+                        cases: report.Reported.Max
+                    };
+                })}/>
+            </div>
+        </Layout>
     );
 }
 

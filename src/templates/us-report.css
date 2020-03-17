@@ -1,9 +1,17 @@
+body {
+    font-family: 'Raleway', sans-serif;
+}
+
 svg {
-    /* fill: #ccc; */
     stroke: #333;
     stroke-width: 0.9;
 }
 
-.selected {
-    fill: #fff;
+.map {
+    height: 30rem;
 }
+
+/* .map__inner {
+    width: 100%;
+    height: 100%;
+} */

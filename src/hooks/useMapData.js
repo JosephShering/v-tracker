@@ -1,47 +1,46 @@
-import {useEffect} from 'react';
+import {useLayoutEffect} from 'react';
 import  * as d3 from 'd3';
-import * as scheme from 'd3-scale-chromatic';
 import * as topojson from 'topojson';
 
 export default function useMapData(data) {
-    useEffect(() => {
+    useLayoutEffect(() => {
+        if(!data.map || !data.parent) {
+            return
+        }
         init(data);
-    }, []);
+    }, [data]);
 }
 
-async function init({reports, mouseOver, mouseOut}) {
-    const margin = {
-        top: -50,
-        left: 0
-    };
-    const width = window.innerWidth - margin.left;
-    const height = 640 - margin.top;
-    const svg = d3.select('.map')
-    .append('svg')
-    .attr('height', height)
-    .attr('width', width)
-    .append('g')
-    .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    const projection = d3.geoAlbersUsa()
-    .translate([ width / 2, height / 2 ])
-
-    const path = d3.geoPath()
-    .projection(projection);
-
-    
+async function init({
+    reports,
+    parent,
+    map
+}) {
+    const width = parent.current.clientWidth;
+    const height = map.current.clientHeight;
 
     const topoData = await getTopoData();
     const tsv = await getTSVData();
-
+    const states = topojson.feature(topoData, topoData.objects.states);
     const scale = createScale(reports);
-
-    const states = topojson.feature(topoData, topoData.objects.states).features;
-
     const formattedStateData = getFormattedStateData(reports);
 
+    const svg = d3.select(map.current)
+    .append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('height', height)
+    .attr('width', width)
+    .append('g');
+
+    const projection = d3.geoAlbersUsa()
+    .fitSize([width, height], states)
+    .translate([ width / 2, height / 2 ]);
+
+    const path = d3.geoPath()
+    .projection(projection)
+
     svg.selectAll('.state')
-    .data(states)
+    .data(states.features)
     .enter()
     .append('path')
     .attr('class', 'state')
@@ -57,12 +56,6 @@ async function init({reports, mouseOver, mouseOut}) {
 
         return '#ccc';
     })
-    .on('mouseover', function(d) {
-        mouseOver(d3.select(this));
-    })
-    .on('mouseout', function(d) {
-        mouseOut(d3.select(this));
-    });
 
     return svg;
 }
@@ -99,32 +92,29 @@ function getFormattedStateData(reports) {
     }, {});
 }
 
-function getMaxReported(reports) {
-    let max = 0;
+// function getMaxReported(reports) {
+//     let max = 0;
 
-    for(const report of reports) {
-        max = Math.max(max, report.Reported.Max);
-    }
+//     for(const report of reports) {
+//         max = Math.max(max, report.Reported.Max);
+//     }
 
-    return max;
-}
+//     return max;
+// }
 
-function getMinReported(reports) {
-    let min = 1000;
+// function getMinReported(reports) {
+//     let min = 1000;
 
-    for(const report of reports) {
-        min = Math.min(min, report.Reported.Max);
-    }
+//     for(const report of reports) {
+//         min = Math.min(min, report.Reported.Max);
+//     }
 
-    return min;
-}
+//     return min;
+// }
 
 function createScale(reports) {
     const scale = d3.scaleThreshold()
     .range(getColorRange());
-
-    const max = getMaxReported(reports);
-    const min = getMinReported(reports);
 
     scale.domain(getDomains());
     return scale;
