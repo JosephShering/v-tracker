@@ -1,0 +1,9 @@
+svg {
+    /* fill: #ccc; */
+    stroke: #333;
+    stroke-width: 0.9;
+}
+
+.selected {
+    fill: #fff;
+}
